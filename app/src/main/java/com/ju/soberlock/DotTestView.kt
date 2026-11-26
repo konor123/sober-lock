@@ -45,6 +45,23 @@ class DotTestView @JvmOverloads constructor(
 
         /** 고정 통과 기준: 적중률 70% 이상 */
         const val PASS_HIT_RATE = 0.70
+
+        /** 결과 판정: 고정 기준 또는 기준 측정값(+40% 여유)을 만족하면 통과 */
+        fun evaluate(results: List<DotResult>, baselineReactionMs: Float): Pair<Boolean, String> {
+            if (results.isEmpty()) return false to "점이 하나도 기록되지 않았습니다"
+            val hits = results.filter { it.hit }
+            val hitRate = hits.size.toDouble() / results.size
+            val avgReaction = if (hits.isNotEmpty()) hits.map { it.reactionMs }.average() else Double.MAX_VALUE
+            val thresholdMs = if (baselineReactionMs > 0f) {
+                baselineReactionMs * 1.4
+            } else {
+                PASS_AVG_REACTION_MS.toDouble()
+            }
+            val pass = avgReaction <= thresholdMs && hitRate >= PASS_HIT_RATE
+            val avgText = if (hits.isEmpty()) "측정 불가" else "${avgReaction.toLong()}ms"
+            val detail = "평균 반응 $avgText (기준 ${thresholdMs.toLong()}ms 이하) · 적중률 ${(hitRate * 100).toInt()}% (70% 이상)"
+            return pass to detail
+        }
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -161,22 +178,4 @@ class DotTestView @JvmOverloads constructor(
         onFinish = null
     }
 
-    /** 결과 판정: 고정 기준 또는 기준 측정값(+40% 여유) 중 하나라도 만족하면 통과 */
-    companion object {
-        fun evaluate(results: List<DotResult>, baselineReactionMs: Float): Pair<Boolean, String> {
-            if (results.isEmpty()) return false to "점이 하나도 기록되지 않았습니다"
-            val hits = results.filter { it.hit }
-            val hitRate = hits.size.toDouble() / results.size
-            val avgReaction = if (hits.isNotEmpty()) hits.map { it.reactionMs }.average() else Double.MAX_VALUE
-            val thresholdMs = if (baselineReactionMs > 0f) {
-                baselineReactionMs * 1.4
-            } else {
-                PASS_AVG_REACTION_MS.toDouble()
-            }
-            val pass = avgReaction <= thresholdMs && hitRate >= PASS_HIT_RATE
-            val avgText = if (hits.isEmpty()) "측정 불가" else "${avgReaction.toLong()}ms"
-            val detail = "평균 반응 $avgText (기준 ${thresholdMs.toLong()}ms 이하) · 적중률 ${(hitRate * 100).toInt()}% (70% 이상)"
-            return pass to detail
-        }
-    }
 }
