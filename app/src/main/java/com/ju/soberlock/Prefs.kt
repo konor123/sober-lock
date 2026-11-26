@@ -31,11 +31,6 @@ class Prefs(context: Context) {
         get() = sp.getLong("emergency_unlock_until", 0L)
         set(v) = sp.edit { putLong("emergency_unlock_until", v) }
 
-    /** 실패 쿨다운 종료 시각 (epoch ms). 0 = 쿨다운 없음 */
-    var cooldownUntil: Long
-        get() = sp.getLong("cooldown_until", 0L)
-        set(v) = sp.edit { putLong("cooldown_until", v) }
-
     /** 점 테스트 기준 평균 반응시간 (ms). 0 = 아직 측정 안 함 */
     var baselineReactionMs: Float
         get() = sp.getFloat("baseline_reaction_ms", 0f)

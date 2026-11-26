@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.speech.RecognitionListener
@@ -28,14 +27,13 @@ import java.util.Locale
  *
  * 해제 1순위: 랩/발음 테스트 (랜덤 문장, 한국어 음성인식, 일치도 70% 이상·15초 이내).
  * 폴백(시끄러운 환경용): 점 따라가기 + 반응속도 테스트 10초 고정.
- * 실패 시 5분 쿨다운. 긴급 해제: 5초 꾹 누르기 + 확인 후 10분 전체 해제.
+ * 실패 시 바로 재도전 가능(쿨다운 없음). 긴급 해제: 5초 꾹 누르기 + 확인 후 10분 전체 해제.
  */
 class LockActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PACKAGE = "locked_package"
         private const val REQUEST_RECORD_AUDIO = 1001
-        private const val COOLDOWN_MS = 5 * 60 * 1000L
         private const val EMERGENCY_HOLD_MS = 5_000L
         private const val EMERGENCY_UNLOCK_MS = 10 * 60 * 1000L
         private const val RAP_TIMEOUT_MS = 15_000L
@@ -57,7 +55,6 @@ class LockActivity : AppCompatActivity() {
     private lateinit var btnStartDot: Button
     private lateinit var dotTestView: DotTestView
     private lateinit var tvDotResult: TextView
-    private lateinit var tvCooldown: TextView
     private lateinit var btnEmergency: Button
     private lateinit var layoutRap: View
     private lateinit var layoutDot: View
@@ -69,7 +66,6 @@ class LockActivity : AppCompatActivity() {
     private var rapHandled = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private var rapTimeoutRunnable: Runnable? = null
-    private var cooldownTimer: CountDownTimer? = null
 
     private var emergencyHolding = false
     private var emergencyHoldStart = 0L
@@ -100,7 +96,6 @@ class LockActivity : AppCompatActivity() {
         btnStartDot = findViewById(R.id.btnStartDot)
         dotTestView = findViewById(R.id.dotTestView)
         tvDotResult = findViewById(R.id.tvDotResult)
-        tvCooldown = findViewById(R.id.tvCooldown)
         btnEmergency = findViewById(R.id.btnEmergency)
         layoutRap = findViewById(R.id.layoutRap)
         layoutDot = findViewById(R.id.layoutDot)
@@ -123,18 +118,11 @@ class LockActivity : AppCompatActivity() {
             }
         })
 
-        refreshCooldown()
         measureNoise()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refreshCooldown()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        cooldownTimer?.cancel()
         mainHandler.removeCallbacksAndMessages(null)
         emergencyHandler.removeCallbacksAndMessages(null)
         try {
@@ -191,10 +179,6 @@ class LockActivity : AppCompatActivity() {
     // ---------- 랩/발음 테스트 ----------
 
     private fun startRap() {
-        if (isCoolingDown()) {
-            Toast.makeText(this, "쿨다운 중입니다. 잠시 뒤 다시 시도하세요.", Toast.LENGTH_SHORT).show()
-            return
-        }
         if (listening) return
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
@@ -242,8 +226,8 @@ class LockActivity : AppCompatActivity() {
                     rapHandled = true
                     listening = false
                     cancelRapTimeout()
-                    tvRapResult.text = "인식에 실패했습니다 (오류 $error). 점 테스트를 이용하거나 5분 뒤 다시 시도하세요."
-                    // 인식 오류 자체는 쿨다운을 걸지 않고 재시도 기회를 준다.
+                    tvRapResult.text = "인식에 실패했습니다 (오류 $error). 점 테스트를 이용하거나 바로 다시 시도하세요."
+                    // 인식 오류 자체는 실패로 처리하지 않고 바로 재시도할 수 있다.
                     // 단, 말이 안 들린 경우(NO_MATCH/SPEECH_TIMEOUT)는 실패로 처리한다.
                     if (error == SpeechRecognizer.ERROR_NO_MATCH ||
                         error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT
@@ -315,10 +299,6 @@ class LockActivity : AppCompatActivity() {
     // ---------- 점 테스트 ----------
 
     private fun startDotTest() {
-        if (isCoolingDown()) {
-            Toast.makeText(this, "쿨다운 중입니다. 잠시 뒤 다시 시도하세요.", Toast.LENGTH_SHORT).show()
-            return
-        }
         tvDotResult.text = "10초간 점을 뜨자마자 터치하세요."
         dotTestView.post {
             dotTestView.startTest { results ->
@@ -334,51 +314,15 @@ class LockActivity : AppCompatActivity() {
         }
     }
 
-    // ---------- 쿨다운 ----------
-
-    private fun isCoolingDown(): Boolean =
-        System.currentTimeMillis() < prefs.cooldownUntil
-
-    private fun refreshCooldown() {
-        val now = System.currentTimeMillis()
-        val remaining = prefs.cooldownUntil - now
-        if (remaining <= 0) {
-            cooldownTimer?.cancel()
-            tvCooldown.text = ""
-            btnStartRap.isEnabled = true
-            btnDotTest.isEnabled = true
-            return
-        }
-        btnStartRap.isEnabled = false
-        btnDotTest.isEnabled = false
-        cooldownTimer?.cancel()
-        cooldownTimer = object : CountDownTimer(remaining, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                val sec = millisUntilFinished / 1000
-                tvCooldown.text = "쿨다운 중: ${sec / 60}분 ${sec % 60}초 남음 (그 전에는 재도전 불가)"
-            }
-
-            override fun onFinish() {
-                tvCooldown.text = ""
-                btnStartRap.isEnabled = true
-                btnDotTest.isEnabled = true
-                Toast.makeText(this@LockActivity, "쿨다운이 끝났습니다. 다시 시도할 수 있습니다.", Toast.LENGTH_SHORT).show()
-            }
-        }.start()
-    }
-
     private fun handleFail(reason: String) {
-        val now = System.currentTimeMillis()
-        prefs.cooldownUntil = now + COOLDOWN_MS
         try {
             speechRecognizer?.stopListening()
         } catch (_: Exception) {
         }
         listening = false
         dotTestView.stopTest()
-        LogStore.append(this, "해제 실패: $reason — 5분 쿨다운")
-        Toast.makeText(this, "해제에 실패했습니다. 5분 뒤 다시 시도하세요.", Toast.LENGTH_LONG).show()
-        refreshCooldown()
+        LogStore.append(this, "해제 실패: $reason — 바로 재도전 가능")
+        Toast.makeText(this, "해제에 실패했습니다. 바로 다시 시도할 수 있습니다.", Toast.LENGTH_LONG).show()
     }
 
     // ---------- 해제 성공 ----------
