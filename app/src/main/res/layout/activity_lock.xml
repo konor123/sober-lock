@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/tvLockedApp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="앱이 잠겨 있습니다"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="해제하려면 랩 테스트 또는 점 테스트를 통과하세요." />
+
+        <TextView
+            android:id="@+id/tvNoise"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="주변 소음 측정 중…" />
+
+        <TextView
+            android:id="@+id/tvCooldown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/layoutRap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="랩 테스트"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPhrase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="#11000000"
+                android:padding="12dp"
+                android:text="랩 시작을 누르면 문장이 나타납니다."
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/btnStartRap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="56dp"
+                android:text="랩 시작 (마이크로 읽기)"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tvRapResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="" />
+
+            <Button
+                android:id="@+id/btnDotTest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="시끄러우면 점 테스트로 전환" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutDot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="점 테스트 (10초)"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="10초간 랜덤 위치에 뜨는 점을 뜨자마자 터치하세요." />
+
+            <com.ju.soberlock.DotTestView
+                android:id="@+id/dotTestView"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_marginTop="8dp"
+                android:background="#11000000" />
+
+            <Button
+                android:id="@+id/btnStartDot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="56dp"
+                android:text="점 테스트 시작 (10초)"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tvDotResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="" />
+
+            <Button
+                android:id="@+id/btnRapTest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="랩 테스트로 돌아가기" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnEmergency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:minHeight="56dp"
+            android:text="긴급 해제 (5초 꾹 누르기)" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="긴급 해제 시 10분간 모든 잠금이 풀리고 기록이 남습니다. 전화/119는 잠기지 않습니다." />
+
+        <Button
+            android:id="@+id/btnGoHome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="홈으로 가기" />
+
+    </LinearLayout>
+</ScrollView>

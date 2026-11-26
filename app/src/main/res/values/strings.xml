@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">맑은잠금</string>
+    <string name="accessibility_service_description">선택한 앱이 실행될 때 잠금 화면을 띄우기 위해 사용합니다. 전경 앱이 바뀌는 것만 감지합니다.</string>
+</resources>
